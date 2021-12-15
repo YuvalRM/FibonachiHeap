@@ -81,6 +81,13 @@ public class FibonacciHeap {
 			resetHeap();
 			return;
 		} else {
+			if (first == min) {
+				if (min.getChild() != null) {
+					first = min.getChild();
+				} else {
+					first = min.getNext();
+				}
+			}
 			HeapNode child = min.getChild();
 			if (child == null) {
 				HeapNode nextMin = min.getNext();
@@ -95,15 +102,15 @@ public class FibonacciHeap {
 					node.setMark(false);
 					node.setParent(null);
 					node = node.getNext();
-				} while (node == child);
+				} while (node != child);
 				if (min.getNext() == min) {
 					first = child;
 				} else {
-					node = node.getPrev();
+					node = child.getPrev();
 					HeapNode nextMin = min.getNext();
 					HeapNode prevMin = min.getPrev();
 					connect2Nodes(node, nextMin);
-					connect2Nodes(child, prevMin);
+					connect2Nodes(prevMin,child );
 				}
 			}
 
@@ -117,32 +124,40 @@ public class FibonacciHeap {
 		HeapNode node = first;
 		first.getPrev().setNext(null); // so we know where to stop
 		while (node != null) {
+			HeapNode next = node.getNext();
 			int k = node.getRank();
 			while (ranks[k] != null) {
-				link(node, ranks[k]);
+				node=link(node, ranks[k]);
 				ranks[k] = null;
 				k++;
 				assert (k <= (int) Math.ceil(Math.log((double) size)) * 2);
 			}
 
 			ranks[k] = node;
-			node = node.getNext();
+			node = next;
 		}
 		first = null;
 		this.trees = 0;
 		for (HeapNode tree : ranks) {
-			insertNode(tree);
+			if (tree != null) {
+				insertNode(tree);
+			}
 		}
 	}
 
-	protected void link(HeapNode parent, HeapNode child) {
+	protected HeapNode link(HeapNode parent, HeapNode child) {
 		links++;
+		if(child.getKey()<parent.getKey()) {
+			HeapNode temp=parent;
+			parent=child;
+			child=temp;
+		}
 		child.setParent(parent);
 		child.setMark(false);
 		if (parent.getChild() == null) {
 			parent.setChild(child);
 			connect2Nodes(child, child);
-			return;
+			return parent;
 		}
 		HeapNode thisChild = parent.getChild();
 		HeapNode lastChild = thisChild.getPrev();
@@ -150,7 +165,7 @@ public class FibonacciHeap {
 		connect2Nodes(child, thisChild);
 		parent.setChild(child);
 		parent.setRank(parent.getRank() + 1);
-
+		return parent;
 	}
 
 	/**
@@ -203,6 +218,7 @@ public class FibonacciHeap {
 	 * 
 	 */
 	public int[] countersRep() {
+		min.getChild();
 		int[] arr = new int[100];
 		return arr; // to be replaced by student code
 	}
@@ -215,7 +231,11 @@ public class FibonacciHeap {
 	 *
 	 */
 	public void delete(HeapNode x) {
-		return; // should be replaced by student code
+		assert (x.getKey() >= min.getKey());
+		if (x != min) {
+			decreaseKey(x, x.getKey() - this.min.getKey() + 2);
+		}
+		this.deleteMin();
 	}
 
 	/**
@@ -226,7 +246,50 @@ public class FibonacciHeap {
 	 * cascading cuts procedure should be applied if needed).
 	 */
 	public void decreaseKey(HeapNode x, int delta) {
-		return; // should be replaced by student code
+		x.setKey(x.getKey() - delta);
+		if (x.getKey() < this.min.getKey()) {
+			this.min = x;
+		}
+		if (x.getParent() == null || x.getParent().getKey() < x.getKey()) {
+			return;
+		}
+		cascadingCuts(x, x.getParent());
+
+	}
+
+	protected void cascadingCuts(HeapNode child, HeapNode parent) {
+		assert (parent != null);
+		assert (child.getParent() == parent);
+		if (child.isMark()) {
+			this.marked--;
+		}
+		cut(child, parent);
+		insertNode(child);
+		if (parent.getParent() != null) {
+			if (parent.isMark()) {
+				cascadingCuts(parent, parent.getParent());
+
+			} else {
+				parent.setMark(true);
+				this.marked++;
+			}
+
+		}
+	}
+
+	protected void cut(HeapNode child, HeapNode parent) {
+		cuts++;
+		assert (child.getParent() == parent);
+		child.setParent(null);
+		if (child.getNext() == child) {
+			parent.setChild(null);
+		} else {
+			parent.setChild(child.getNext());
+			HeapNode next = child.getNext();
+			HeapNode prev = child.getPrev();
+			connect2Nodes(prev, next);
+		}
+		parent.setRank(parent.getRank() - 1);
 	}
 
 	/**
@@ -239,7 +302,7 @@ public class FibonacciHeap {
 	 * the number of marked nodes in the heap.
 	 */
 	public int potential() {
-		return trees+2*marked; // should be replaced by student code
+		return trees + 2 * marked; // should be replaced by student code
 	}
 
 	/**
