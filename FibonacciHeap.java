@@ -218,9 +218,30 @@ public class FibonacciHeap {
 	 * 
 	 */
 	public int[] countersRep() {
-		min.getChild();
-		int[] arr = new int[100];
-		return arr; // to be replaced by student code
+		if(this.isEmpty()){
+			return new int[0];
+		}
+		HeapNode node = this.first;
+		int max_rank = 0;
+
+		do{
+			if(node.getRank() >= max.getRank()){
+				max_rank = node.getRank();
+			}
+			node = node.getNext();
+		}while(node != this.first);
+
+		int[] res = new int[max_rank+1];
+
+		node = this.first;
+
+		do{
+			int rank = node.getRank();
+			assert(rank <= max_rank)
+			res[rank]++;
+		}while(node != this.first);
+
+		return res;
 	}
 
 	/**
@@ -338,8 +359,14 @@ public class FibonacciHeap {
 	 * ###CRITICAL### : you are NOT allowed to change H.
 	 */
 	public static int[] kMin(FibonacciHeap H, int k) {
-		int[] arr = new int[100];
-		return arr; // should be replaced by student code
+		int[] res = new int[k];
+		FibonacciHeap help = new FibonacciHeap();
+		help.insert(this.min.getKey());
+		for(int i=0;i<k;i++){
+
+		}
+
+		return res;
 	}
 
 	/**
@@ -354,6 +381,7 @@ public class FibonacciHeap {
 		public int key;
 		protected int rank;
 		protected boolean mark;
+		protected HeapNode kmin_help;
 		protected HeapNode child;
 		protected HeapNode prev;
 		protected HeapNode parent;
