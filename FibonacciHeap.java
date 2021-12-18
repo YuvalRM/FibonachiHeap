@@ -110,7 +110,7 @@ public class FibonacciHeap {
 					HeapNode nextMin = min.getNext();
 					HeapNode prevMin = min.getPrev();
 					connect2Nodes(node, nextMin);
-					connect2Nodes(prevMin,child );
+					connect2Nodes(prevMin, child);
 				}
 			}
 
@@ -120,14 +120,14 @@ public class FibonacciHeap {
 	}
 
 	protected void consolidate() {
-		HeapNode[] ranks = new HeapNode[(int) Math.ceil(Math.log((double) size)) * 2];
+		HeapNode[] ranks = new HeapNode[(int) Math.ceil(Math.log((double) size))*2 + 2];
 		HeapNode node = first;
 		first.getPrev().setNext(null); // so we know where to stop
 		while (node != null) {
 			HeapNode next = node.getNext();
 			int k = node.getRank();
 			while (ranks[k] != null) {
-				node=link(node, ranks[k]);
+				node = link(node, ranks[k]);
 				ranks[k] = null;
 				k++;
 				assert (k <= (int) Math.ceil(Math.log((double) size)) * 2);
@@ -147,23 +147,24 @@ public class FibonacciHeap {
 
 	protected HeapNode link(HeapNode parent, HeapNode child) {
 		links++;
-		if(child.getKey()<parent.getKey()) {
-			HeapNode temp=parent;
-			parent=child;
-			child=temp;
+		if (child.getKey() < parent.getKey()) {
+			HeapNode temp = parent;
+			parent = child;
+			child = temp;
 		}
 		child.setParent(parent);
 		child.setMark(false);
 		if (parent.getChild() == null) {
 			parent.setChild(child);
 			connect2Nodes(child, child);
-			return parent;
+
+		} else {
+			HeapNode thisChild = parent.getChild();
+			HeapNode lastChild = thisChild.getPrev();
+			connect2Nodes(lastChild, child);
+			connect2Nodes(child, thisChild);
+			parent.setChild(child);
 		}
-		HeapNode thisChild = parent.getChild();
-		HeapNode lastChild = thisChild.getPrev();
-		connect2Nodes(lastChild, child);
-		connect2Nodes(child, thisChild);
-		parent.setChild(child);
 		parent.setRank(parent.getRank() + 1);
 		return parent;
 	}
@@ -218,28 +219,28 @@ public class FibonacciHeap {
 	 * 
 	 */
 	public int[] countersRep() {
-		if(this.isEmpty()){
+		if (this.isEmpty()) {
 			return new int[0];
 		}
 		HeapNode node = this.first;
 		int max_rank = 0;
 
-		do{
-			if(node.getRank() >= max.getRank()){
+		do {
+			if (node.getRank() >= max_rank) {
 				max_rank = node.getRank();
 			}
 			node = node.getNext();
-		}while(node != this.first);
+		} while (node != this.first);
 
-		int[] res = new int[max_rank+1];
+		int[] res = new int[max_rank + 1];
 
 		node = this.first;
 
-		do{
+		do {
 			int rank = node.getRank();
-			assert(rank <= max_rank)
+			assert (rank <= max_rank);
 			res[rank]++;
-		}while(node != this.first);
+		} while (node != this.first);
 
 		return res;
 	}
@@ -361,12 +362,26 @@ public class FibonacciHeap {
 	public static int[] kMin(FibonacciHeap H, int k) {
 		int[] res = new int[k];
 		FibonacciHeap help = new FibonacciHeap();
-		help.insert(this.min.getKey());
-		for(int i=0;i<k;i++){
+		help.insert(H.findMin().getKey()).kmin_help = H.findMin();
 
+		for (int i = 0; i < k; i++) {
+			HeapNode node = help.findMin();
+			res[i] = node.getKey();
+			help.deleteMin();
+			HeapNode child = node.kmin_help.getChild();
+			if (child != null) {
+				do {
+					help.insert(child.getKey()).kmin_help = child;
+					child = child.getNext();
+				} while (child != node.kmin_help.child);
+			}
 		}
 
 		return res;
+	}
+
+	public HeapNode getFirst() {
+		return this.first;
 	}
 
 	/**
@@ -447,6 +462,10 @@ public class FibonacciHeap {
 
 		public void setKey(int key) {
 			this.key = key;
+		}
+
+		public boolean getMarked() {
+			return mark;
 		}
 
 	}
