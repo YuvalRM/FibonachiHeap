@@ -188,6 +188,17 @@ public class FibonacciHeap {
 	 *
 	 */
 	public void meld(FibonacciHeap heap2) {
+		if(heap2.isEmpty()) {
+			return;
+		}
+		if(this.isEmpty()) {
+			this.first=heap2.first;
+			this.marked=heap2.marked;
+			this.size=heap2.size;
+			this.trees=heap2.trees;
+			this.min=heap2.min;
+			return;
+		}
 		HeapNode thisLast = this.first.getPrev();
 		HeapNode thatLast = heap2.first.getPrev();
 		HeapNode thisFirst = this.first;
@@ -360,6 +371,7 @@ public class FibonacciHeap {
 	 * ###CRITICAL### : you are NOT allowed to change H.
 	 */
 	public static int[] kMin(FibonacciHeap H, int k) {
+		assert(H.min==H.first);
 		int[] res = new int[k];
 		FibonacciHeap help = new FibonacciHeap();
 		help.insert(H.findMin().getKey()).kmin_help = H.findMin();

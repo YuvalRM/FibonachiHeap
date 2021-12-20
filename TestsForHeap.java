@@ -27,12 +27,25 @@ public class TestsForHeap {
 		System.out.println(Arrays.toString(arr));
 		
 		FibonacciHeap b=new FibonacciHeap();
-		for(int i=0;i<150;i++) {
-			b.insert(i);
+		FibonacciHeap.HeapNode [] nodes=new FibonacciHeap.HeapNode[100];
+		for(int i=0;i<100;i++) {
+			nodes[i]=b.insert(i);
 		}
 		for(int i =0; i<15;i++) {
 			b.deleteMin();
 		}
-		HeapPrinter.print(b, true);
+		HeapPrinter.print(b, false);
+		b.decreaseKey(nodes[88],100);
+		b.decreaseKey(nodes[76],100);
+		b.decreaseKey(nodes[86],100);
+		b.decreaseKey(nodes[52],100);
+		HeapPrinter.print(b, false);
+		b.deleteMin();
+		HeapPrinter.print(b, false);
+		b.delete(nodes[36]);
+		HeapPrinter.print(b, false);
+		b.delete(nodes[84]);
+		HeapPrinter.print(b, false);
+		System.out.println(b.totalCuts());
 	}
 }
