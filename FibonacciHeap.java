@@ -138,7 +138,8 @@ public class FibonacciHeap {
 		}
 		first = null;
 		this.trees = 0;
-		for (HeapNode tree : ranks) {
+		for (int i=ranks.length-1;i>=0;i--) {
+			HeapNode tree=ranks[i];
 			if (tree != null) {
 				insertNode(tree);
 			}
@@ -251,6 +252,7 @@ public class FibonacciHeap {
 			int rank = node.getRank();
 			assert (rank <= max_rank);
 			res[rank]++;
+			node=node.getNext();
 		} while (node != this.first);
 
 		return res;
@@ -295,6 +297,7 @@ public class FibonacciHeap {
 		assert (child.getParent() == parent);
 		if (child.isMark()) {
 			this.marked--;
+			child.setMark(false);
 		}
 		cut(child, parent);
 		insertNode(child);
@@ -371,6 +374,9 @@ public class FibonacciHeap {
 	 * ###CRITICAL### : you are NOT allowed to change H.
 	 */
 	public static int[] kMin(FibonacciHeap H, int k) {
+		if(H.isEmpty()) {
+			return new int[0];
+		}
 		assert(H.min==H.first);
 		int[] res = new int[k];
 		FibonacciHeap help = new FibonacciHeap();
