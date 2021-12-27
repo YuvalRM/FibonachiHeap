@@ -1,6 +1,33 @@
 
 public class FibonacciExp {
-	public static void main(String[] args) {
+	public static void main(String [] args) {
+		Exp2(4);
+	}
+	
+	public static void Exp2(int k) {
+		double first=System.currentTimeMillis();
+		int m=40;
+		FibonacciHeap tree = new FibonacciHeap();
+		for(int i=0;i<=m;i++) {
+			tree.insert(i);
+			
+		}
+		for(int i=0;i<(int)((3.0/4.0)*m);i++) {
+			tree.deleteMin();
+			if(true) {
+				TestFibonacciHeap.heapPrinter.print(tree, false);
+			}
+		}
+		double second=System.currentTimeMillis();
+		System.out.println("M is"+String.valueOf(m));
+		System.out.println("the time it took is "+String.valueOf(second-first));
+		System.out.println("Total Links "+String.valueOf(FibonacciHeap.links));
+		System.out.println("Total Cuts "+String.valueOf(FibonacciHeap.cuts));
+		System.out.println("Potential "+String.valueOf(tree.potential()));
+		System.out.println(m-Math.floor(Math.log10(m)/Math.log10(2)));
+	}
+	
+	public static void Exp1() {
 		double times[]=new double[5];
 		for(int i=0;i<4;i++) {
 			times[i]=System.currentTimeMillis();

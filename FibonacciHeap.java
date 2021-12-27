@@ -275,8 +275,7 @@ public class FibonacciHeap {
 
 	/**
 	 * public void decreaseKey(HeapNode x, int delta)
-	 *
-	 * Decreases the key of the node x by a non-negative value delta. The structure
+	 *eases the key of the node x by a non-negative value delta. The structure
 	 * of the heap should be updated to reflect this change (for example, the
 	 * cascading cuts procedure should be applied if needed).
 	 */
