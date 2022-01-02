@@ -268,7 +268,7 @@ public class FibonacciHeap {
 	public void delete(HeapNode x) {
 		assert (x.getKey() >= min.getKey());
 		if (x != min) {
-			decreaseKey(x, x.getKey() - this.min.getKey() + 2);
+			decreaseKey(x, x.getKey() - this.min.getKey() + 1);
 		}
 		this.deleteMin();
 	}
