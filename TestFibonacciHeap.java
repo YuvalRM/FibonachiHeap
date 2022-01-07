@@ -209,7 +209,7 @@ class HeapPrinter {
 
             function.accept(heapNode, nexts);
 
-            heapNode = heapNode.child;
+            heapNode = heapNode.getChild();
             if (heapNode != null) {
                 nexts.add(false);
             }
@@ -272,7 +272,7 @@ public class TestFibonacciHeap {
                 assertSame(node, node.getPrev().getNext());
             }
 
-            actualRanks.merge(node.rank, 1, Integer::sum); // increase value by 1 or put 1 if absent
+            actualRanks.merge(node.getRank(), 1, Integer::sum); // increase value by 1 or put 1 if absent
 
             node = node.getNext();
         } while (node != null && node != heap.getFirst());
@@ -307,6 +307,40 @@ public class TestFibonacciHeap {
         return numberOfTrees;
     }
 
+    void assertValidHeapNodeChildren(FibonacciHeap.HeapNode node) {
+        // Check its relations to its children
+        if (node.getChild() == null) {
+            assertEquals(0, node.getRank());
+            return;
+        }
+
+        int childrenCount = 0;
+        FibonacciHeap.HeapNode currentChild = node.getChild();
+        assertNotSame(node, currentChild);
+
+        do {
+            childrenCount++;
+            assertSame(node, currentChild.getParent());
+            // Check heap property
+            if (this.uniqueValues) {
+                assertTrue(currentChild.getKey() > node.getKey());
+            } else {
+                assertTrue(currentChild.getKey() >= node.getKey());
+            }
+            currentChild = currentChild.getNext();
+        } while (currentChild != null && currentChild != node.getChild());
+
+        if (childrenCount != node.getRank()) {
+            assertEquals(
+                    childrenCount, node.getRank(),
+                    String.format(
+                            "Node with key %d has rank %d but only %d %s",
+                            node.getKey(), node.getRank(), childrenCount,
+                            childrenCount == 1 ? "child" : "children"));
+        }
+    }
+
+
     int assertValidHeapNodes(FibonacciHeap heap) {
         /* Check all nodes */
         FibonacciHeap.HeapNode node = heap.getFirst();
@@ -331,35 +365,7 @@ public class TestFibonacciHeap {
             stack.push(node.getNext());
             numberOfMarked += node.getMarked() ? 1 : 0;
 
-            // Check its relations to its children
-            if (node.getChild() == null) {
-                assertEquals(0, node.getRank());
-            } else {
-                int childrenCount = 0;
-                FibonacciHeap.HeapNode currentChild = node.getChild();
-                assertNotSame(node, currentChild);
-                do {
-                    childrenCount++;
-                    assertSame(node, currentChild.getParent());
-
-                    // Check heap property
-                    if (this.uniqueValues) {
-                        assertTrue(currentChild.getKey() > node.getKey());
-                    } else {
-                        assertTrue(currentChild.getKey() >= node.getKey());
-                    }
-
-                    currentChild = currentChild.getNext();
-
-                } while (currentChild != null && currentChild != node.getChild());
-                if (childrenCount != node.getRank())
-                    assertEquals(
-                            childrenCount, node.getRank(),
-                            String.format(
-                                    "Node with key %d has rank %d but only %d %s",
-                                    node.getKey(), node.getRank(), childrenCount,
-                                    childrenCount == 1 ? "child" : "children"));
-            }
+            assertValidHeapNodeChildren(node);
 
             node = node.getChild();
         }
@@ -388,7 +394,7 @@ public class TestFibonacciHeap {
 
         assertNotNull(node);
         assertNotNull(min);
-        assertNull(min.parent);
+        assertNull(min.getParent());
 
         int numberOfTrees = assertValidHeapRoots(heap, this.uniqueValues);
         int numberOfMarked = assertValidHeapNodes(heap);
@@ -440,14 +446,14 @@ public class TestFibonacciHeap {
     }
 
     void testDeletion(FibonacciHeap heap, FibonacciHeap.HeapNode... nodes) {
-        int startSize = heap.size();
+        int size = heap.size();
 
         for (FibonacciHeap.HeapNode node : nodes) {
             heap.delete(node);
+            size--;
             assertValidHeap(heap);
+            assertEquals(size, heap.size());
         }
-
-        assertEquals(nodes.length, startSize - heap.size());
     }
 
     void testDeletion(FibonacciHeap heap, List<FibonacciHeap.HeapNode> nodes) {
@@ -1572,72 +1578,164 @@ public class TestFibonacciHeap {
     }
 
     @Test
-    @Order(93)
-    public void testDeleteMinEdge() {
+    @Order(48)
+    public void testDeleteMinEdge1() {
         // Delete min when min = first, it no children and no siblings
         testInsertion(heap, 0);
         heap.deleteMin();
         assertValidHeap(heap);
         assertTrue(heap.isEmpty());
+    }
 
+    @Test
+    @Order(56)
+    public void testDeleteMinEdge2() {
         // Delete min when min = first, it has has no children and has a sibling
         Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 2, 0);
         heap.deleteMin();
         assertValidHeap(heap);
         assertSame(nodes.get(2), heap.findMin());
+    }
 
+    @Test
+    @Order(55)
+    public void testDeleteMinEdge3() {
         // Delete min when min = first, it has a child but has no siblings
-        heap = new FibonacciHeap();
-        nodes = testInsertion(heap, 2, 1, 0);
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 2, 1, 0);
         heap.deleteMin();
         assertValidHeap(heap);
         heap.deleteMin();
         assertValidHeap(heap);
         assertSame(nodes.get(2), heap.findMin());
+    }
 
-        // Delete min when min = first, it has a child and has sibling
-        heap = new FibonacciHeap();
-        nodes = testInsertion(heap, 3, 1, 2, 0);
+    @Test
+    @Order(63)
+    public void testDeleteMinEdge4() {
+        // Delete min when min = first, it has multiple children but has no siblings
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 4, 3, 2, 1, 0);
         heap.deleteMin();
         assertValidHeap(heap);
         heap.deleteMin();
         assertValidHeap(heap);
         assertSame(nodes.get(2), heap.findMin());
+        assertSame(nodes.get(2), heap.getFirst());
+        assertSame(nodes.get(3), heap.getFirst().getNext());
+        assertSame(nodes.get(4), heap.getFirst().getNext().getChild());
+    }
 
+    @Test
+    @Order(62)
+    public void testDeleteMinEdge5() {
+        // Delete min when min = first, it has a child and has a sibling
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 3, 1, 2, 0);
+        heap.deleteMin();
+        assertValidHeap(heap);
+        heap.deleteMin();
+        assertValidHeap(heap);
+        assertSame(nodes.get(2), heap.findMin());
+    }
+
+    @Test
+    @Order(72)
+    public void testDeleteMinEdge6() {
+        // Delete min when min = first, it has multiple children and has a sibling
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 4, 1, 2, 3, 0);
+        heap.deleteMin();
+        assertValidHeap(heap);
+
+        FibonacciHeap heap2 = new FibonacciHeap();
+        nodes.putAll(testInsertion(heap2, 5));
+        heap.meld(heap2);
+        assertValidHeap(heap);
+
+        heap.deleteMin();
+        assertValidHeap(heap);
+        assertEquals(4, heap.size());
+        assertSame(nodes.get(2), heap.findMin());
+        assertSame(nodes.get(2), heap.getFirst());
+        assertSame(nodes.get(4), heap.getFirst().getChild());
+        assertSame(nodes.get(3), heap.getFirst().getChild().getNext());
+        assertSame(nodes.get(5), heap.getFirst().getChild().getChild());
+    }
+
+    @Test
+    @Order(58)
+    public void testDeleteMinEdge7() {
         // Delete min when min != first, it has no child and has a siblings
-        heap = new FibonacciHeap();
-        nodes = testInsertion(heap, 0, 2);
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 0, 2);
         heap.deleteMin();
         assertValidHeap(heap);
         assertSame(nodes.get(2), heap.findMin());
+    }
 
-        heap = new FibonacciHeap();
-        nodes = testInsertion(heap, 3, 0, 2);
+    @Test
+    @Order(72)
+    public void testDeleteMinEdge8() {
+        // Delete min when min != first, it has no child and has multiple siblings
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 3, 0, 2);
         heap.deleteMin();
         assertValidHeap(heap);
         assertSame(nodes.get(2), heap.findMin());
+    }
 
+    @Test
+    @Order(77)
+    public void testDeleteMinEdge9() {
         // Delete min when min != first, it has a child and has a sibling
-        heap = new FibonacciHeap();
         testInsertionReverse(heap, 5, 6);
         testInsertion(heap, 0);
+
         FibonacciHeap heap2 = new FibonacciHeap();
-        nodes = testInsertion(heap2, 0, 1, 2, 3, 4);
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap2, 0, 1, 2, 3, 4);
+
         heap.deleteMin();
         assertValidHeap(heap);
         heap2.deleteMin();
         assertValidHeap(heap2);
+
         heap.meld(heap2);
         assertValidHeap(heap);
+
         heap.deleteMin();
+        assertValidHeap(heap);
+
         assertSame(nodes.get(2), heap.getFirst());
         assertSame(nodes.get(3), heap.getFirst().getNext());
+    }
 
-        heap = new FibonacciHeap();
+    @Test
+    @Order(86)
+    public void testDeleteMinEdge10() {
+        // Delete min when min != first, it has multiple children and has a sibling
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, -20);
+
+        FibonacciHeap heap2 = new FibonacciHeap();
+        nodes.putAll(testInsertion(heap2, -100, -30, -25, -15, -10));
+        heap2.deleteMin();
+        assertValidHeap(heap2);
+
+        heap.meld(heap2);
+        assertValidHeap(heap);
+
+        heap.deleteMin();
+        assertValidHeap(heap);
+        assertEquals(4, heap.size());
+        assertSame(nodes.get(-25), heap.findMin());
+        assertSame(nodes.get(-25), heap.getFirst());
+        assertSame(nodes.get(-15), heap.getFirst().getChild());
+        assertSame(nodes.get(-20), heap.getFirst().getChild().getNext());
+        assertSame(nodes.get(-10), heap.getFirst().getChild().getChild());
+    }
+
+    @Test
+    @Order(82)
+    public void testDeleteMinEdge11() {
+        // Delete min when min != first, it has a child and has multiple siblings
         testInsertionReverse(heap, 5, 6);
         testInsertion(heap, 0);
-        heap2 = new FibonacciHeap();
-        nodes = testInsertion(heap2, 0, 1, 2, 3, 4);
+        FibonacciHeap heap2 = new FibonacciHeap();
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap2, 0, 1, 2, 3, 4);
         FibonacciHeap heap3 = new FibonacciHeap();
         testInsertion(heap3, 100);
         heap.deleteMin();
@@ -1650,6 +1748,47 @@ public class TestFibonacciHeap {
         heap.deleteMin();
         assertSame(nodes.get(2), heap.getFirst());
         assertSame(nodes.get(3), heap.getFirst().getNext());
+    }
+
+    @Test
+    @Order(132)
+    public void testDeleteMinEdge12() {
+        // Delete min when min != first, it has multiple children and has multiple siblings
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, IntStream.rangeClosed(9, 16)::iterator);
+
+        FibonacciHeap heap2 = new FibonacciHeap();
+        nodes.putAll(testInsertion(heap2, IntStream.rangeClosed(1, 8)::iterator));
+
+        FibonacciHeap heap3 = new FibonacciHeap();
+        nodes.putAll(testInsertion(heap3, IntStream.rangeClosed(17, 32)::iterator));
+
+        for (FibonacciHeap h : Arrays.asList(heap, heap2, heap3)) {
+            testInsertion(h, Integer.MIN_VALUE);
+            h.deleteMin();
+            assertValidHeap(h);
+        }
+
+        heap.meld(heap2);
+        assertValidHeap(heap);
+
+        heap.meld(heap3);
+        assertValidHeap(heap);
+
+        heap.deleteMin();
+        assertValidHeap(heap);
+
+        assertSame(nodes.get(2), heap.findMin());
+
+        FibonacciHeap.HeapNode node = heap.getFirst();
+        assertSame(nodes.get(2), heap.getFirst());
+        node = node.getNext();
+        assertSame(nodes.get(3), node);
+        node = node.getNext();
+        assertSame(nodes.get(5), node);
+        node = node.getNext();
+        assertSame(nodes.get(9), node);
+        node = node.getNext();
+        assertSame(nodes.get(17), node);
     }
 
     @Test
@@ -1681,5 +1820,150 @@ public class TestFibonacciHeap {
         testDeletion(heap, nodes.get(0));
         assertSame(nodes.get(Integer.MIN_VALUE), heap.findMin());
         assertSame(nodes.get(Integer.MIN_VALUE), heap.getFirst());
+    }
+
+    @Test
+    @Order(84)
+    public void testDeleteFirst1() {
+        // delete first when it has no children
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertion(heap, 10);
+
+        FibonacciHeap heap2 = new FibonacciHeap();
+        nodes.putAll(testInsertionReverse(heap2, 0, 8));
+
+        heap2.deleteMin();
+        assertValidHeap(heap2);
+
+        testDeletion(heap2, nodes.get(6), nodes.get(4)); // delete few nodes to make it non binomial
+
+        heap.meld(heap2);
+        assertValidHeap(heap);
+        assertSame(nodes.get(10), heap.getFirst());
+        assertEquals(0, heap.getFirst().getRank());
+
+        testDeletion(heap, heap.getFirst()); // delete first
+
+        assertSame(nodes.get(1), heap.getFirst());
+        assertSame(nodes.get(1), heap.findMin());
+    }
+
+    @Test
+    @Order(85)
+    public void testDeleteFirst2() {
+        // delete first when it has multiple children
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertionReverse(heap, 0, 8);
+
+        FibonacciHeap heap2 = new FibonacciHeap();
+        nodes.putAll(testInsertion(heap2, 10));
+
+        heap.deleteMin();
+        assertValidHeap(heap);
+
+        testDeletion(heap, nodes.get(6), nodes.get(4)); // delete few nodes to make it non binomial
+
+        heap.meld(heap2);
+        assertValidHeap(heap);
+        assertSame(nodes.get(1), heap.getFirst());
+        assertEquals(3, heap.getFirst().getRank());
+
+        testDeletion(heap, heap.getFirst()); // delete first
+
+        assertSame(nodes.get(10), heap.getFirst());
+        assertSame(nodes.get(2), heap.getFirst().getNext());
+        assertSame(nodes.get(2), heap.findMin());
+    }
+
+    @Tag("NoCompare")
+    @Test
+    @Order(4900)
+    public void testSpecialMarkedChainTree() {
+        int depth = 10000;
+        // case 10
+        int n = depth * 5; // must divide by 5
+
+        // base
+        Map<Integer, FibonacciHeap.HeapNode> nodes = testInsertionReverse(heap, n - 5, n - 1);
+        heap.deleteMin();
+        assertValidHeap(heap);
+        testDeletion(heap, nodes.get(n - 1));
+
+        // loop
+        Map<Integer, FibonacciHeap.HeapNode> currentNodes = null;
+        FibonacciHeap.HeapNode middle, first, second;
+        int i = 1;
+        for (;i < Math.min(10, n / 5); i++) { // test the first 10 iterations
+        	
+        	if(heap.getFirst().getChild()==null) {
+        		int x=3;
+        	}
+            middle = heap.getFirst().getChild().getNext();
+            currentNodes = testInsertionReverse(heap, n - ((i + 1) * 5), n - ((i + 1) * 5) + 4);
+            heap.deleteMin();
+            assertValidHeap(heap);
+            testDeletion(
+                heap,
+                currentNodes.get(n - ((i + 1) * 5) + 4),
+                currentNodes.get(n - ((i + 1) * 5) + 3),
+                middle);
+        }
+
+        for (; i < n / 5; i++) { // complete all iterations (unchecked)
+            middle = heap.getFirst().getChild().getNext();
+            first = heap.insert(n - ((i + 1) * 5) + 4);
+            second = heap.insert(n - ((i + 1) * 5) + 3);
+            heap.insert(n - ((i + 1) * 5) + 2);
+            heap.insert(n - ((i + 1) * 5) + 1);
+            heap.insert(n - ((i + 1) * 5));
+            heap.deleteMin();
+
+            heap.delete(first);
+            heap.delete(second);
+            heap.delete(middle);
+        }
+
+        assertValidHeap(heap);
+
+
+        testDeletion(heap, heap.getFirst().getChild().getNext());
+        FibonacciHeap.HeapNode node = heap.getFirst();
+        while (node != null) {
+            assertTrue(node.getChild() != null ? node.getRank() == 1 : node.getRank() == 0);
+            assertEquals(node.getParent() != null, node.getMarked());
+            node = node.getChild();
+        }
+
+
+        /*
+             ▄▄▄▄    ▒█████   ▒█████   ███▄ ▄███▓ ▐██▌
+            ▓█████▄ ▒██▒  ██▒▒██▒  ██▒▓██▒▀█▀ ██▒ ▐██▌
+            ▒██▒ ▄██▒██░  ██▒▒██░  ██▒▓██    ▓██░ ▐██▌
+            ▒██░█▀  ▒██   ██░▒██   ██░▒██    ▒██  ▓██▒
+            ░▓█  ▀█▓░ ████▓▒░░ ████▓▒░▒██▒   ░██▒ ▒▄▄
+            ░▒▓███▀▒░ ▒░▒░▒░ ░ ▒░▒░▒░ ░ ▒░   ░  ░ ░▀▀▒
+            ▒░▒   ░   ░ ▒ ▒░   ░ ▒ ▒░ ░  ░      ░ ░  ░
+             ░    ░ ░ ░ ░ ▒  ░ ░ ░ ▒  ░      ░       ░
+             ░          ░ ░      ░ ░         ░    ░
+                  ░
+                         __,-~~/~    `---.
+                       _/_,---(      ,    )
+                   __ /        <    /   )  \___
+    - ------===;;;'====------------------===;;;===----- -  -
+                      \/  ~"~"~"~"~"~\~"~)~"/
+                      (_ (   \  (     >    \)
+                       \_( _ <         >_>'
+                          ~ `-i' ::>|--"
+                              I;|.|.|
+                             <|i::|i|`.
+                            (` ^'"`-' ")
+        */
+        heap.decreaseKey(nodes.get(n - 2), n);
+
+        assertValidHeap(heap);
+
+        node = heap.getFirst();
+        while (node != null && node != heap.getFirst()) {
+            assertNull(node.getChild());
+            node = node.getNext();
+        }
     }
 }
