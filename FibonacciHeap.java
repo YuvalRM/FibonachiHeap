@@ -353,7 +353,7 @@ public class FibonacciHeap {
 	public void delete(HeapNode x) {
 
 		if (x != min) {//if is not the minimum we force it to be the minimum
-			decreaseKey(x, x.getKey() - this.min.getKey() + 1);//WC O(n), Amort O(logn)
+			decreaseKey(x, x.getKey() - this.min.getKey() + 1);//WC O(n), Amort O(1)
 		}
 		//now it's the minimum and we delete it
 		this.deleteMin();//WC O(n), Amort O(logn)
@@ -376,7 +376,7 @@ public class FibonacciHeap {
 		if (x.getKey() < this.min.getKey()) {// if its's the new minimum we set it as the minimum
 			this.min = x;
 		}
-		if (x.getParent() == null || x.getParent().getKey() < x.getKey()) {// if we didn't break any rule? GREAT!
+		if (x.getParent() == null || x.getParent().getKey() < x.getKey()) {// we didn't break any rule? GREAT!
 			return;
 		}
 		// if we broke a rule we'll use cascading cuts to cut the node
