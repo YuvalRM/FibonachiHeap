@@ -31,7 +31,7 @@ public class FibonacciHeap {
 	/**
 	 * protected void resetHeap()
 	 * 
-	 * reset the heap set all the variables as if the heap was just initialized
+	 * resets the heap sets all the variables as if the heap was just initialized
 	 * 
 	 * Time complexity:
 	 * 
@@ -83,7 +83,7 @@ public class FibonacciHeap {
 	/**
 	 * protected void insertNode(HeapNode node)
 	 * 
-	 * the method receives a root of a tree and insert it as is to the heap as the first heap.
+	 * the method receives a root of a tree and inserts it as is to the heap as the first tree.
 	 * 
 	 * Time complexity:
 	 * 
@@ -204,7 +204,7 @@ public class FibonacciHeap {
 	/**
 	 * protected HeapNode link(HeapNode parent, HeapNode child)
 	 * 
-	 * Receives 2 roots of trees and sets the smaller to be the parent of the other
+	 * Receives 2 roots of trees and combines them to 1 big tree and sets the smaller to be the parent of the other
 	 * 
 	 * Time complexity:
 	 * 
@@ -282,7 +282,7 @@ public class FibonacciHeap {
 		this.size += heap2.size;// add the attributes
 		this.trees += heap2.trees;
 		this.marked += heap2.marked;
-		min = this.min.getKey() < heap2.min.getKey() ? min : heap2.min; // check wich of the minimuns is the new minimum
+		min = this.min.getKey() < heap2.min.getKey() ? min : heap2.min; // check which of the minimums is the new minimum
 	}
 
 	/**
@@ -295,7 +295,7 @@ public class FibonacciHeap {
 	 * O(1)
 	 */
 	public int size() {
-		return this.size; // should be replaced by student code
+		return this.size;
 	}
 
 	/**
@@ -361,7 +361,7 @@ public class FibonacciHeap {
 
 	/**
 	 * public void decreaseKey(HeapNode x, int delta)
-	 *eases the key of the node x by a non-negative value delta. The structure
+	 * decreases the key of the node x by a non-negative value delta. The structure
 	 * of the heap should be updated to reflect this change (for example, the
 	 * cascading cuts procedure should be applied if needed).
 	 * 
@@ -369,7 +369,7 @@ public class FibonacciHeap {
 	 * 
 	 * WC O(n)
 	 * 
-	 * Amort O(logn)
+	 * Amort O(1)
 	 */
 	public void decreaseKey(HeapNode x, int delta) {		
 		x.setKey(x.getKey() - delta);//change the key
@@ -380,7 +380,7 @@ public class FibonacciHeap {
 			return;
 		}
 		// if we broke a rule we'll use cascading cuts to cut the node
-		cascadingCuts(x, x.getParent());//WC O(n), Amort O(logn)
+		cascadingCuts(x, x.getParent());//WC O(n), Amort O(1)
 
 	}
 	
@@ -393,7 +393,7 @@ public class FibonacciHeap {
 	 * 
 	 * WC O(n)
 	 * 
-	 * Amort O(logn)
+	 * Amort O(1)
 	 * 
 	 */
 	protected void cascadingCuts(HeapNode child, HeapNode parent) {
@@ -405,7 +405,7 @@ public class FibonacciHeap {
 		insertNode(child);//insert it as a tree
 		if (parent.getParent() != null) {
 			if (parent.isMark()) {
-				cascadingCuts(parent, parent.getParent());// recursion as we saw in lecture WC O(n)
+				cascadingCuts(parent, parent.getParent());// recursion as we saw in lecture WC O(n) Amort O(1)
 
 			} else {
 				parent.setMark(true);//if we don't need to continue just mark the parent and finish
@@ -417,6 +417,8 @@ public class FibonacciHeap {
 	
 	/**
 	 * protected void cut(HeapNode child, HeapNode parent)
+	 * 
+	 * Receives a parent and it's child disconnecting the child from the parent and affectively making it a new tree.
 	 * 
 	 * Time complexity:
 	 * 
@@ -484,7 +486,7 @@ public class FibonacciHeap {
 	 * O(1)
 	 */
 	public static int totalCuts() {
-		return cuts; // should be replaced by student code
+		return cuts; 
 	}
 
 	/**
@@ -598,7 +600,7 @@ public class FibonacciHeap {
 		/**
 		 * public boolean isMark()
 		 * 
-		 * returns weather the node is marked or not
+		 * returns whether the node is marked or not
 		 * 
 		 * Time Complexity:
 		 * 
@@ -611,7 +613,7 @@ public class FibonacciHeap {
 		/**
 		 * public void setMark(boolean mark)
 		 * 
-		 * sets weather the node is marked or not
+		 * sets whether the node is marked or not
 		 * 
 		 * Time complexity:
 		 * O(1)
@@ -725,7 +727,7 @@ public class FibonacciHeap {
 		/**
 		 * public boolean getMarked()
 		 * 
-		 * returns weather the node is marked or not
+		 * returns whether the node is marked or not
 		 * 
 		 * Time Complexity:
 		 * 
